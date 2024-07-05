@@ -1,0 +1,30 @@
+/* Base styles */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    height: 100%; /* Ensure the body takes full height */
+}
+
+.container {
+    width: 90%;
+    margin: 20px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 40px);
+}
+
+input[type="submit"] {
+    margin-top: 10px;
+}
+
+#result {
+    margin-top: 20px;
+    min-width: 80%;
+    overflow-y: auto; /* Keeps the scrolling ability */
+}
