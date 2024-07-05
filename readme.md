@@ -23,7 +23,7 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
 ## Setting Up the Environment
 
 1. **Clone the repository**:
-   ```bash
+   ```
    git clone git@github.com:taofiqsulayman/text-reader.git
    cd text-reader
    ```
@@ -31,42 +31,42 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
 2. **Create and activate a virtual environment**:
 
    - On macOS and Linux:
-     ```bash
+     ```
      python3 -m venv venv
      source venv/bin/activate
      ```
 
    - On Windows:
-     ```bash
+     ```
      python -m venv venv
      .\venv\Scripts\activate
      ```
 
 3. **Install the required packages**:
-   ```bash
+   ```
    pip install -r requirements.txt
    ```
 
    If `requirements.txt` does not exist yet, you can manually install the required packages:
-   ```bash
+   ```
    pip install flask paddlepaddle paddleocr pdfplumber pandas camelot-py[cv]
    ```
 
    Then, create `requirements.txt`:
-   ```bash
+   ```
    pip freeze > requirements.txt
    ```
 
 ## Running the App
 
 1. **Ensure the virtual environment is activated**:
-   ```bash
+   ```
    source venv/bin/activate  # On macOS and Linux
    .\venv\Scripts\activate  # On Windows
    ```
 
 2. **Run the Flask app**:
-   ```bash
+   ```
    python app.py
    ```
 
