@@ -28,3 +28,13 @@ input[type="submit"] {
     min-width: 80%;
     overflow-y: auto; /* Keeps the scrolling ability */
 }
+
+#result table {
+    border-collapse: collapse; /* Ensures that the border is collapsed into a single border */
+}
+
+#result th, #result td {
+    border: 1px solid black; /* Adds a border to each cell */
+    padding: 8px; /* Adds some padding inside each cell for better readability */
+}
+
