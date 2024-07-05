@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify, render_template
 import os
 import pdfplumber
-import easyocr
+import paddleocr
 import pandas as pd
 
 app = Flask(__name__)
-reader = easyocr.Reader(['en'])  # Initialize the EasyOCR reader
+ocr = paddleocr.OCR(use_angle_cls=True)  # Initialize the PaddleOCR
 
 @app.route('/')
 def index():
@@ -44,8 +44,8 @@ def upload_file():
 
 def extract_text_from_image(file_path):
     try:
-        result = reader.readtext(file_path, detail=0)
-        text = " ".join(result)
+        result = ocr.ocr(file_path, cls=True)
+        text = "\n".join([line[1][0] for line in result[0]])
         return text
     except Exception as e:
         app.logger.error(f"Error extracting text from image: {e}")
