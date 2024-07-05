@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify, render_template
 import os
 import pdfplumber
-import paddleocr
+from paddleocr import PaddleOCR
 import pandas as pd
 
 app = Flask(__name__)
-ocr = paddleocr.OCR(use_angle_cls=True)  # Initialize the PaddleOCR
+ocr = PaddleOCR(use_angle_cls=True)  # Initialize the PaddleOCR
 
 @app.route('/')
 def index():
@@ -71,7 +71,25 @@ def extract_text_and_tables_from_pdf(file_path):
 
 def convert_table_to_json(table):
     df = pd.DataFrame(table[1:], columns=table[0])
-    return df.to_json(orient='split')
+
+    # Clean up the table data
+    cleaned_table = clean_up_table(df)
+
+    # Convert cleaned table to JSON
+    return cleaned_table.to_json(orient='split')
+
+def clean_up_table(df):
+    # Remove empty rows and columns
+    df = df.dropna(how='all').dropna(axis=1, how='all')
+
+    # Handle empty cells by replacing NaN values with empty strings
+    df = df.fillna('')
+
+    # Optionally, you can apply additional formatting or filtering here
+
+    return df
+
+
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
