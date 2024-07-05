@@ -3,6 +3,7 @@ import os
 import pdfplumber
 from paddleocr import PaddleOCR
 import pandas as pd
+import camelot
 
 app = Flask(__name__)
 ocr = PaddleOCR(use_angle_cls=True)  # Initialize the PaddleOCR
@@ -56,40 +57,37 @@ def extract_text_and_tables_from_pdf(file_path):
         text = ""
         tables = []
 
+        # Use pdfplumber for text extraction
         with pdfplumber.open(file_path) as pdf:
             for page in pdf.pages:
                 text += page.extract_text()
-                tables.extend(page.extract_tables())
 
-        # Convert tables to a more JSON-friendly format
-        tables_json = [convert_table_to_json(table) for table in tables]
+        # Use Camelot for table extraction
+        tables_pdf = camelot.read_pdf(file_path, pages='all')
+        for table_pdf in tables_pdf:
+            df = table_pdf.df
+            cleaned_table = clean_up_table(df)
+            tables.append(convert_table_to_json(cleaned_table))
 
-        return text, tables_json
+        return text, tables
+
     except Exception as e:
         app.logger.error(f"Error extracting text/tables from PDF: {e}")
         raise
 
 def convert_table_to_json(table):
-    df = pd.DataFrame(table[1:], columns=table[0])
-
-    # Clean up the table data
-    cleaned_table = clean_up_table(df)
-
-    # Convert cleaned table to JSON
-    return cleaned_table.to_json(orient='split')
+    # Convert DataFrame to JSON
+    return table.to_json(orient='split')
 
 def clean_up_table(df):
-    # Remove empty rows and columns
-    df = df.dropna(how='all').dropna(axis=1, how='all')
+    # Implement table cleaning logic as needed
+    # Example: Remove empty rows and columns
+    # df = df.dropna(how='all').dropna(axis=1, how='all')
 
     # Handle empty cells by replacing NaN values with empty strings
     df = df.fillna('')
 
-    # Optionally, you can apply additional formatting or filtering here
-
     return df
-
-
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
