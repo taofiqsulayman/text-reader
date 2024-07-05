@@ -80,13 +80,8 @@ def convert_table_to_json(table):
     return table.to_json(orient='split')
 
 def clean_up_table(df):
-    # Implement table cleaning logic as needed
-    # Example: Remove empty rows and columns
-    # df = df.dropna(how='all').dropna(axis=1, how='all')
-
-    # Handle empty cells by replacing NaN values with empty strings
+    df = df.dropna(how='all').dropna(axis=1, how='all')
     df = df.fillna('')
-
     return df
 
 if __name__ == '__main__':
