@@ -14,6 +14,8 @@ document
 
         const result = await response.json();
 
+        console.log(result);
+
         document.getElementById("extractedText").innerText =
             result.extracted_text || "No text extracted.";
 
@@ -36,7 +38,7 @@ document
                     const rowElement = document.createElement("tr");
                     row.forEach((cell) => {
                         const td = document.createElement("td");
-                        td.innerText = cell;
+                        td.innerText = cell || ""; // Fill empty cells with an empty string
                         rowElement.appendChild(td);
                     });
                     tableElement.appendChild(rowElement);
