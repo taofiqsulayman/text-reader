@@ -4,25 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload File</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>PDF Table Extractor</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
     <div class="container">
-        <h1>Upload File</h1>
-        <form id="uploadForm" enctype="multipart/form-data">
-            <input type="file" name="file" id="fileInput" required>
+        <h1>PDF Table Extractor</h1>
+        <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <input type="file" id="fileInput" name="file" required>
             <input type="submit" value="Upload">
         </form>
         <div id="result">
-            <h2>Extracted Text</h2>
-            <pre id="extractedText"></pre>
             <h2>Extracted Tables</h2>
             <div id="extractedTables"></div>
+            <h2>Extracted Text</h2>
+            <pre id="extractedText"></pre>
+            <div id="loadingIndicator" style="display: none;">processing...</div>
         </div>
     </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="/static/script.js"></script>
 </body>
 
 </html>

@@ -7,6 +7,10 @@ document
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
 
+        // Show loading indicator
+        const loadingIndicator = document.getElementById("loadingIndicator");
+        loadingIndicator.style.display = "block";
+
         const response = await fetch("/upload", {
             method: "POST",
             body: formData,
@@ -15,6 +19,9 @@ document
         const result = await response.json();
 
         console.log(result);
+
+        // Hide loading indicator
+        loadingIndicator.style.display = "none";
 
         document.getElementById("extractedText").innerText =
             result.extracted_text || "No text extracted.";
@@ -38,7 +45,7 @@ document
                     const rowElement = document.createElement("tr");
                     row.forEach((cell) => {
                         const td = document.createElement("td");
-                        td.innerText = cell || ""; // Fill empty cells with an empty string
+                        td.innerText = cell;
                         rowElement.appendChild(td);
                     });
                     tableElement.appendChild(rowElement);

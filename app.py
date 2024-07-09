@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template
 import os
 import fitz  # PyMuPDF
+import camelot
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -62,22 +64,15 @@ def extract_text_and_tables_from_pdf(file_path):
         with fitz.open(file_path) as doc:
             for page in doc:
                 text += page.get_text("text")
-                if page.get_images():
-                    for item in page.get_images():
-                        xref = item[0]
-                        pix = fitz.Pixmap(doc, xref)
-                        if pix.n < 4:  # this is GRAY or RGB
-                            pdfdata = pix.pdfocr_tobytes()
-                        else:  # CMYK: convert to RGB first
-                            pix = fitz.Pixmap(fitz.csRGB, pix)
-                            pdfdata = pix.pdfocr_tobytes()
-                        ocrpdf = fitz.open("pdf", pdfdata)
-                        text += ocrpdf[0].get_text()
-                tables_found = page.find_tables()
-                for table in tables_found:
-                    df = table.to_pandas()
-                    cleaned_table = clean_up_table(df)
-                    tables.append(convert_table_to_json(cleaned_table))
+
+        # Extract tables using Camelot
+        camelot_tables = camelot.read_pdf(file_path, pages='all')
+
+        for table in camelot_tables:
+            df = table.df
+            cleaned_table = clean_up_table(df)
+            if not cleaned_table.empty:
+                tables.append(convert_table_to_json(cleaned_table))
 
         return text, tables
 
@@ -86,19 +81,14 @@ def extract_text_and_tables_from_pdf(file_path):
         raise
 
 def convert_table_to_json(table):
+    # Convert DataFrame to JSON
     return table.to_json(orient='split')
 
 def clean_up_table(df):
     df = df.dropna(how='all').dropna(axis=1, how='all')
-    df = df.fillna('')
-    return df
-
-def convert_table_to_json(table):
-    return table.to_json(orient='split')
-
-def clean_up_table(df):
-    df = df.dropna(how='all').dropna(axis=1, how='all')
-    df = df.fillna('')
+    df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)  # Strip whitespace from strings
+    df = df.replace("", pd.NA)  # Convert empty strings to NaNs
+    df = df.dropna(how='all').dropna(axis=1, how='all')  # Drop rows and columns with all NaNs
     return df
 
 if __name__ == '__main__':

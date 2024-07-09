@@ -25,14 +25,28 @@ input[type="submit"] {
 #result {
     margin-top: 20px;
     min-width: 80%;
-    overflow-y: auto;
+    overflow-y: auto; /* Allows vertical scrolling if content overflows */
+    word-wrap: break-word; /* Ensures words break to prevent overflow */
 }
 
 #result table {
+    width: 100%;
     border-collapse: collapse;
+    margin-bottom: 20px;
 }
 
 #result th, #result td {
-    border: .4px solid rgb(33, 32, 32);
+    border: 1px solid #ccc;
     padding: 8px;
+    text-align: left;
+    white-space: normal; /* Allows text to wrap to the next line */
+    overflow-wrap: break-word; /* Allows long words to be broken and wrapped to the next line */
+}
+
+#result th {
+    background-color: #f2f2f2;
+}
+
+#result tr:nth-child(even) {
+    background-color: #f9f9f9;
 }
