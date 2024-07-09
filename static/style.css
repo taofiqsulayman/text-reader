@@ -1,9 +1,8 @@
-/* Base styles */
 body, html {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    height: 100%; /* Ensure the body takes full height */
+    height: 100%;
 }
 
 .container {
@@ -26,5 +25,15 @@ input[type="submit"] {
 #result {
     margin-top: 20px;
     min-width: 80%;
-    overflow-y: auto; /* Keeps the scrolling ability */
+    overflow-y: auto;
 }
+
+#result table {
+    border-collapse: collapse;
+}
+
+#result th, #result td {
+    border: .4px solid rgb(33, 32, 32);
+    padding: 8px;
+}
+
