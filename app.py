@@ -1,11 +1,8 @@
+import re
+import fitz  # PyMuPDF
+import pandas as pd
 from flask import Flask, request, jsonify, render_template
 import os
-import cv2
-import pytesseract
-import pandas as pd
-from pytesseract import Output
-import camelot
-import fitz
 
 app = Flask(__name__)
 
@@ -29,95 +26,76 @@ def upload_file():
             file_path = os.path.join('uploads', filename)
             file.save(file_path)
 
-            if filename.lower().endswith(('png', 'jpg', 'jpeg')):
-                text, tables = extract_text_and_tables_from_image(file_path)
-            elif filename.lower().endswith('pdf'):
-                text, tables = extract_text_and_tables_from_pdf(file_path)
+            if filename.lower().endswith('pdf'):
+                extracted_info = extract_info_from_pdf(file_path)
             else:
                 return jsonify({'error': 'Unsupported file type'}), 400
 
             os.remove(file_path)
-            return jsonify({'extracted_text': text, 'extracted_tables': tables}), 200
+            return jsonify({'extracted_info': extracted_info}), 200
 
     except Exception as e:
         app.logger.error(f"Error processing file: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
-def extract_text_and_tables_from_image(file_path):
-    try:
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        # Use adaptive thresholding to segment the table
-        thresh = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-
-        # Invert the image
-        inverted_thresh = cv2.bitwise_not(thresh)
-
-        # Detect lines in the image
-        horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 1))
-        detect_horizontal = cv2.morphologyEx(inverted_thresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
-
-        vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 40))
-        detect_vertical = cv2.morphologyEx(inverted_thresh, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
-
-        mask = detect_horizontal + detect_vertical
-
-        # Find contours and filter out table contours
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        table_contours = [c for c in contours if cv2.contourArea(c) > 1000]
-
-        tables = []
-        for contour in table_contours:
-            x, y, w, h = cv2.boundingRect(contour)
-            table_image = img[y:y+h, x:x+w]
-            table_text = pytesseract.image_to_string(table_image, config='--psm 6')
-            tables.append(table_text)
-
-        text = pytesseract.image_to_string(img)
-
-        return text, tables
-
-    except Exception as e:
-        app.logger.error(f"Error extracting text/tables from image: {e}")
-        raise
-
-def extract_text_and_tables_from_pdf(file_path):
+def extract_info_from_pdf(file_path):
     try:
         text = ""
-        tables = []
-
-        # Extract text from PDF
         with fitz.open(file_path) as doc:
             for page in doc:
                 text += page.get_text("text")
 
-        # Extract tables using Camelot
-        camelot_tables = camelot.read_pdf(file_path, pages='all')
-        for table in camelot_tables:
-            df = table.df
-            cleaned_table = clean_up_table(df)
-            if not cleaned_table.empty:
-                tables.append(convert_table_to_json(cleaned_table))
+        # Extract information using regex
+        extracted_info = {
+            'name': extract_name(text),
+            'email': extract_email(text),
+            'links': extract_links(text),
+            'experience': extract_experience(text),
+            'education': extract_education(text),
+            'skills': extract_skills(text)
+        }
 
-        return text, tables
+        return extracted_info
 
     except Exception as e:
-        app.logger.error(f"Error extracting text/tables from PDF: {e}")
+        app.logger.error(f"Error extracting info from PDF: {e}")
         raise
 
-def convert_table_to_json(table):
-    # Convert DataFrame to JSON
-    return table.to_json(orient='split')
+def extract_name(text):
+    # Implement a regex to find the name (this is a simplified example)
+    name_pattern = re.compile(r'\b([A-Z][a-z]* [A-Z][a-z]*)\b')
+    names = name_pattern.findall(text)
+    return names[0] if names else None
 
-def clean_up_table(df):
-    df = df.dropna(how='all').dropna(axis=1, how='all')
-    df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)  # Strip whitespace from strings
-    df = df.replace("", pd.NA)  # Convert empty strings to NaNs
-    df = df.dropna(how='all').dropna(axis=1, how='all')  # Drop rows and columns with all NaNs
-    return df
+def extract_email(text):
+    email_pattern = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
+    emails = email_pattern.findall(text)
+    return emails[0] if emails else None
+
+def extract_links(text):
+    link_pattern = re.compile(r'\bhttps?://\S+\b')
+    links = link_pattern.findall(text)
+    return links
+
+def extract_experience(text):
+    # Extract experience details (this is a simplified example)
+    experience_pattern = re.compile(r'(Experience|Work History)(.*?)(Education|Skills)', re.DOTALL)
+    experience = experience_pattern.findall(text)
+    return experience[0][1].strip() if experience else None
+
+def extract_education(text):
+    # Extract education details (this is a simplified example)
+    education_pattern = re.compile(r'(Education)(.*?)(Experience|Skills)', re.DOTALL)
+    education = education_pattern.findall(text)
+    return education[0][1].strip() if education else None
+
+def extract_skills(text):
+    # Extract skills details (this is a simplified example)
+    skills_pattern = re.compile(r'(Skills)(.*)', re.DOTALL)
+    skills = skills_pattern.findall(text)
+    return skills[0][1].strip() if skills else None
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
         os.makedirs('uploads')
-    # Set the TESSDATA_PREFIX environment variable
-    os.environ['TESSDATA_PREFIX'] = '/usr/local/Cellar/tesseract/5.4.1/share/tessdata'  # Update this path as needed
     app.run(debug=True)
