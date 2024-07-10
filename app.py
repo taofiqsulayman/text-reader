@@ -1,8 +1,11 @@
 from flask import Flask, request, jsonify, render_template
 import os
-import fitz  # PyMuPDF
-import camelot
+import cv2
+import pytesseract
 import pandas as pd
+from pytesseract import Output
+import camelot
+import fitz
 
 app = Flask(__name__)
 
@@ -27,8 +30,7 @@ def upload_file():
             file.save(file_path)
 
             if filename.lower().endswith(('png', 'jpg', 'jpeg')):
-                text = extract_text_from_image(file_path)
-                tables = []  # No tables to extract from images
+                text, tables = extract_text_and_tables_from_image(file_path)
             elif filename.lower().endswith('pdf'):
                 text, tables = extract_text_and_tables_from_pdf(file_path)
             else:
@@ -41,19 +43,41 @@ def upload_file():
         app.logger.error(f"Error processing file: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
-def extract_text_from_image(file_path):
+def extract_text_and_tables_from_image(file_path):
     try:
-        pix = fitz.Pixmap(file_path)
-        if pix.n < 4:  # this is GRAY or RGB
-            pdfdata = pix.pdfocr_tobytes()
-        else:  # CMYK: convert to RGB first
-            pix = fitz.Pixmap(fitz.csRGB, pix)
-            pdfdata = pix.pdfocr_tobytes()
-        ocrpdf = fitz.open("pdf", pdfdata)
-        text = ocrpdf[0].get_text()
-        return text
+        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        # Use adaptive thresholding to segment the table
+        thresh = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+        # Invert the image
+        inverted_thresh = cv2.bitwise_not(thresh)
+
+        # Detect lines in the image
+        horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 1))
+        detect_horizontal = cv2.morphologyEx(inverted_thresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
+
+        vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 40))
+        detect_vertical = cv2.morphologyEx(inverted_thresh, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
+
+        mask = detect_horizontal + detect_vertical
+
+        # Find contours and filter out table contours
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        table_contours = [c for c in contours if cv2.contourArea(c) > 1000]
+
+        tables = []
+        for contour in table_contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            table_image = img[y:y+h, x:x+w]
+            table_text = pytesseract.image_to_string(table_image, config='--psm 6')
+            tables.append(table_text)
+
+        text = pytesseract.image_to_string(img)
+
+        return text, tables
+
     except Exception as e:
-        app.logger.error(f"Error extracting text from image: {e}")
+        app.logger.error(f"Error extracting text/tables from image: {e}")
         raise
 
 def extract_text_and_tables_from_pdf(file_path):
@@ -61,13 +85,13 @@ def extract_text_and_tables_from_pdf(file_path):
         text = ""
         tables = []
 
+        # Extract text from PDF
         with fitz.open(file_path) as doc:
             for page in doc:
                 text += page.get_text("text")
 
         # Extract tables using Camelot
         camelot_tables = camelot.read_pdf(file_path, pages='all')
-
         for table in camelot_tables:
             df = table.df
             cleaned_table = clean_up_table(df)
