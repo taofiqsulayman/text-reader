@@ -3,6 +3,7 @@
         "jsonify",
         "pdfminer",
         "pdfplumber",
-        "pytesseract"
+        "pytesseract",
+        "spacy"
     ]
 }
