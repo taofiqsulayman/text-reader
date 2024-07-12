@@ -100,7 +100,6 @@ def extract_text_and_tables_from_pdf(file_path):
 
 
 def convert_table_to_json(table):
-    # Convert DataFrame to JSON
     return table.to_json(orient="split")
 
 
@@ -108,11 +107,11 @@ def clean_up_table(df):
     df = df.dropna(how="all").dropna(axis=1, how="all")
     df = df.apply(
         lambda x: x.str.strip() if x.dtype == "object" else x
-    )  # Strip whitespace from strings
-    df = df.replace("", pd.NA)  # Convert empty strings to NaNs
+    )
+    df = df.replace("", pd.NA)
     df = df.dropna(how="all").dropna(
         axis=1, how="all"
-    )  # Drop rows and columns with all NaNs
+    )
     return df
 
 
@@ -156,7 +155,7 @@ def create_nlp_pipeline():
     ruler.add_patterns(patterns)
     nlp.add_pipe(
         "entity_ruler", name="entity_ruler", last=True
-    )  # Pass the string name 'entity_ruler'
+    )
     return nlp
 
 
@@ -229,6 +228,6 @@ if __name__ == "__main__":
         os.makedirs("uploads")
     # Set the TESSDATA_PREFIX environment variable
     os.environ["TESSDATA_PREFIX"] = (
-        "/usr/local/Cellar/tesseract/5.4.1/share/tessdata"  # Update this path as needed
+        "/usr/local/Cellar/tesseract/5.4.1/share/tessdata"  # Update this path as needed depending on installed version
     )
     app.run(debug=True)

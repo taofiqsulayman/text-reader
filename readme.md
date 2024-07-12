@@ -1,7 +1,9 @@
 
 # OCR and PDF Table Extraction Web App
 
-This is a simple web application built with Flask that allows users to upload images or PDF files and extract text and tables from them. The application leverages PaddleOCR for image text extraction and Camelot for PDF table extraction.
+This application allows users to upload images and PDF files to extract text, tables, and specific information such as names, emails, education, work experience, and skills. It uses OCR for images and PDF parsing libraries to extract text and tables from PDF files.
+
+## This version focuses on getting information from CVs and Resumes
 
 ## Table of Contents
 
@@ -13,7 +15,7 @@ This is a simple web application built with Flask that allows users to upload im
 
 ## About the App
 
-This web application allows users to upload image files (PNG, JPG, JPEG) or PDF documents. The app extracts text from the uploaded files and, in the case of PDFs, also extracts tables. The extracted text and tables are then displayed on the web interface.
+This application allows users to upload images and PDF files to extract text, tables, and specific information such as names, emails, education, work experience, and skills. It uses OCR for images and PDF parsing libraries to extract text and tables from PDF files.
 
 ## Requirements
 
@@ -27,6 +29,8 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
    git clone git@github.com:taofiqsulayman/text-reader.git
    cd text-reader
    ```
+
+   switch to v4 branch
 
 2. **Create and activate a virtual environment**:
 
@@ -48,9 +52,7 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
    ```
 
    If `requirements.txt` does not exist yet, you can manually install the required packages:
-   ```
-   pip install flask paddlepaddle paddleocr pdfplumber pandas camelot-py[cv]
-   ```
+
 
    Then, create `requirements.txt`:
    ```
@@ -79,11 +81,14 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
 
 ## Libraries Used
 
-- **Flask**: A micro web framework written in Python.
-- **PaddleOCR**: An OCR tool developed by PaddlePaddle, which provides text detection and recognition capabilities.
-- **pdfplumber**: A library for extracting text, tables, and metadata from PDFs.
-- **Camelot**: A Python library to extract tabular data from PDFs.
-- **Pandas**: A data manipulation and analysis library, used for cleaning and formatting extracted tables.
+ **Flask**: A micro web framework for Python.
+- **PyMuPDF (fitz)**: A library for PDF processing.
+- **pandas**: A data manipulation and analysis library.
+- **camelot-py**: A library for extracting tables from PDFs.
+- **spacy**: A library for Natural Language Processing in Python.
+- **OpenCV**: A library for computer vision tasks.
+- **pytesseract**: A Python wrapper for Google's Tesseract-OCR Engine.
+
 
 ## Project Structure
 
@@ -101,12 +106,11 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
 
 ## Example Usage
 
-1. **Upload an Image**: Upload a PNG, JPG, or JPEG file to extract text from the image using PaddleOCR.
-2. **Upload a PDF**: Upload a PDF file to extract text and tables using pdfplumber and Camelot.
+1. Upload an image (PNG, JPG, JPEG) or PDF file containing a CV/Resume through the web interface.
+2. The application will extract text, tables, and specific information such as names, emails, education, work experience, and skills from the uploaded file and display the results.
 
 ## Troubleshooting
 
-- **PaddleOCR Installation Issues**: If you encounter issues installing PaddleOCR, ensure you have the correct version of PaddlePaddle installed. Refer to the [PaddlePaddle installation guide](https://www.paddlepaddle.org.cn/install/quick) for more details.
 - **Camelot Dependencies**: Camelot requires additional dependencies like `ghostscript` and `opencv-python`. Ensure these are installed correctly. For macOS, you might need to install `ghostscript` using Homebrew:
   ```bash
   brew install ghostscript
