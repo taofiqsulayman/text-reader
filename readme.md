@@ -57,6 +57,17 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
    pip freeze > requirements.txt
    ```
 
+4. Ensure Tesseract is installed and set the `TESSDATA_PREFIX` environment variable. On macOS, you can install Tesseract using Homebrew:
+    ```bash
+    brew install tesseract
+    ```
+    Update the path in `app.py` if needed:
+
+    example on MACOS/OSX
+    ```python
+    os.environ['TESSDATA_PREFIX'] = '/usr/local/Cellar/tesseract/${version}/share/tessdata'
+    ```
+
 ## Running the App
 
 1. **Ensure the virtual environment is activated**:
@@ -79,11 +90,12 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
 
 ## Libraries Used
 
-- **Flask**: A micro web framework written in Python.
-- **PaddleOCR**: An OCR tool developed by PaddlePaddle, which provides text detection and recognition capabilities.
-- **pdfplumber**: A library for extracting text, tables, and metadata from PDFs.
-- **Camelot**: A Python library to extract tabular data from PDFs.
-- **Pandas**: A data manipulation and analysis library, used for cleaning and formatting extracted tables.
+- **Flask**: A micro web framework for Python.
+- **OpenCV**: A library for computer vision tasks.
+- **pytesseract**: A Python wrapper for Google's Tesseract-OCR Engine.
+- **pandas**: A data manipulation and analysis library.
+- **camelot-py**: A library for extracting tables from PDFs.
+- **PyMuPDF (fitz)**: A library for PDF processing.
 
 ## Project Structure
 
@@ -101,16 +113,12 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
 
 ## Example Usage
 
-1. **Upload an Image**: Upload a PNG, JPG, or JPEG file to extract text from the image using PaddleOCR.
-2. **Upload a PDF**: Upload a PDF file to extract text and tables using pdfplumber and Camelot.
+1. **Upload an Image**: Upload a PNG, JPG, or JPEG file to extract text from the image.
+2. **Upload a PDF**: Upload a PDF file to extract text and tables.
 
 ## Troubleshooting
 
-- **PaddleOCR Installation Issues**: If you encounter issues installing PaddleOCR, ensure you have the correct version of PaddlePaddle installed. Refer to the [PaddlePaddle installation guide](https://www.paddlepaddle.org.cn/install/quick) for more details.
-- **Camelot Dependencies**: Camelot requires additional dependencies like `ghostscript` and `opencv-python`. Ensure these are installed correctly. For macOS, you might need to install `ghostscript` using Homebrew:
-  ```bash
-  brew install ghostscript
-  ```
+- ensure Tessaract is correctly installed on your PC
 
 ## Contributing
 
