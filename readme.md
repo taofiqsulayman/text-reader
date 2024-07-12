@@ -1,7 +1,7 @@
 
 # OCR and PDF Table Extraction Web App
 
-This is a simple web application built with Flask that allows users to upload images or PDF files and extract text and tables from them. The application leverages PaddleOCR for image text extraction and Camelot for PDF table extraction.
+This is a simple web application built with Flask that allows users to upload images or PDF files and extract text and tables from them. The application leverages pyMUPDF/Fitz for text extraction and Camelot for PDF table extraction.
 
 ## Table of Contents
 
