@@ -25,11 +25,11 @@ This application allows users to upload images and PDF files to extract text and
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/yourusername/yourproject.git
+    git clone https://github.com/taofiqsulayman/text-reader.git
     ```
 2. Navigate to the project directory:
     ```bash
-    cd yourproject
+    cd text-reader
     ```
 3. Create a virtual environment:
     ```bash
