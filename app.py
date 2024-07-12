@@ -3,7 +3,6 @@ import os
 import cv2
 import pytesseract
 import pandas as pd
-from pytesseract import Output
 import camelot
 import fitz
 
@@ -46,10 +45,7 @@ def upload_file():
 def extract_text_and_tables_from_image(file_path):
     try:
         img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-        # Use adaptive thresholding to segment the table
         thresh = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-
-        # Invert the image
         inverted_thresh = cv2.bitwise_not(thresh)
 
         # Detect lines in the image
@@ -71,6 +67,8 @@ def extract_text_and_tables_from_image(file_path):
             table_image = img[y:y+h, x:x+w]
             table_text = pytesseract.image_to_string(table_image, config='--psm 6')
             tables.append(table_text)
+
+        # TODO: this method is not very accurate, need to improve it....
 
         text = pytesseract.image_to_string(img)
 
@@ -119,5 +117,5 @@ if __name__ == '__main__':
     if not os.path.exists('uploads'):
         os.makedirs('uploads')
     # Set the TESSDATA_PREFIX environment variable
-    os.environ['TESSDATA_PREFIX'] = '/usr/local/Cellar/tesseract/5.4.1/share/tessdata'  # Update this path as needed
+    os.environ['TESSDATA_PREFIX'] = '/usr/local/Cellar/tesseract/5.4.1/share/tessdata'  # Update this path as needed depending on the version installed
     app.run(debug=True)
