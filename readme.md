@@ -48,9 +48,6 @@ This web application allows users to upload image files (PNG, JPG, JPEG) or PDF 
    ```
 
    If `requirements.txt` does not exist yet, you can manually install the required packages:
-   ```
-   pip install flask paddlepaddle paddleocr pdfplumber pandas camelot-py[cv]
-   ```
 
    Then, create `requirements.txt`:
    ```
