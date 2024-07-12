@@ -6,7 +6,7 @@ import pandas as pd
 import camelot
 
 app = Flask(__name__)
-ocr = PaddleOCR(use_angle_cls=True)  # Initialize the PaddleOCR
+ocr = PaddleOCR(use_angle_cls=True)  # this will switch on the angle classifier
 
 @app.route('/')
 def index():
@@ -30,7 +30,9 @@ def upload_file():
 
             if filename.lower().endswith(('png', 'jpg', 'jpeg')):
                 text = extract_text_from_image(file_path)
-                tables = []  # No tables to extract from images
+                tables = []
+                # TODO: Implement table extraction from images / do your research
+
             elif filename.lower().endswith('pdf'):
                 text, tables = extract_text_and_tables_from_pdf(file_path)
             else:
