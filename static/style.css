@@ -1,4 +1,56 @@
-body, html {
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+textarea {
+    width: 100%;
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#extractedData, #analysisResult {
+    margin-top: 20px;
+}
+
+pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+
+
+
+/* body, html {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
@@ -25,28 +77,28 @@ input[type="submit"] {
 #result {
     margin-top: 20px;
     min-width: 80%;
-    overflow-y: auto; /* Allows vertical scrolling if content overflows */
-    word-wrap: break-word; /* Ensures words break to prevent overflow */
-}
+    overflow-y: auto;
+    word-wrap: break-word;
+} */
 
-#result table {
+#extractedData table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
 }
 
-#result th, #result td {
+#extractedData th, #extractedData td {
     border: 1px solid #ccc;
     padding: 8px;
     text-align: left;
-    white-space: normal; /* Allows text to wrap to the next line */
-    overflow-wrap: break-word; /* Allows long words to be broken and wrapped to the next line */
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
-#result th {
+#extractedData th {
     background-color: #f2f2f2;
 }
 
-#result tr:nth-child(even) {
+#extractedData tr:nth-child(even) {
     background-color: #f9f9f9;
 }

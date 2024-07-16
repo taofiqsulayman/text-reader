@@ -4,25 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Table Extractor</title>
+    <title>PDF CV Analyzer</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
     <div class="container">
-        <h1>PDF Table Extractor</h1>
-        <form id="uploadForm" method="post" enctype="multipart/form-data">
+        <h1>PDF CV Analyzer</h1>
+
+        <!-- Section 1: Extract Data -->
+        <h2>Extract Data</h2>
+        <form id="extractForm" enctype="multipart/form-data">
             <input type="file" id="fileInput" name="file" required>
-            <input type="submit" value="Upload">
+            <button type="submit">Extract Data</button>
         </form>
-        <div id="result">
-            <div id="loadingIndicator" style="display: none;">processing...</div>
-            <h2>Extracted Tables</h2>
-            <div id="extractedTables"></div>
-            <h2>Extracted Text</h2>
-            <pre id="extractedText"></pre>
-        </div>
+        <div id="extractedData"></div>
+
+        <!-- Section 2: Analyze CV -->
+        <h2>Analyze CV</h2>
+        <form id="analyzeForm" enctype="multipart/form-data">
+            <textarea id="jobDescription" name="job_description" placeholder="Paste job description here..."
+                required></textarea>
+            <input type="file" id="resumeInput" name="file" required>
+            <button type="submit">Analyze CV</button>
+        </form>
+        <div id="analysisResult"></div>
     </div>
+
     <script src="/static/script.js"></script>
 </body>
 

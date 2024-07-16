@@ -7,9 +7,14 @@ import spacy
 from spacy.pipeline import EntityRuler
 import re
 
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+
 app = Flask(__name__)
 
 nlp = spacy.load("en_core_web_sm")
+stop_words = set(stopwords.words('english'))
 
 
 @app.route("/")
@@ -61,6 +66,52 @@ def upload_file():
         return jsonify({"error": "Internal Server Error"}), 500
 
 
+@app.route("/analyze", methods=["POST"])
+def analyze_cv():
+    try:
+        if "file" not in request.files or "job_description" not in request.form:
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        file = request.files["file"]
+        job_description = request.form["job_description"]
+
+        if file.filename == "":
+            return jsonify({"error": "No selected file"}), 400
+
+        if file:
+            filename = file.filename
+            file_path = os.path.join("uploads", filename)
+            file.save(file_path)
+
+            with fitz.open(file_path) as doc:
+                resume_text = ""
+                for page in doc:
+                    resume_text += page.get_text("text")
+
+            os.remove(file_path)
+            extracted_info = process_extracted_text(resume_text)
+
+            match_percentage, matching_skills = analyze_job_description(
+                job_description, clean_text(resume_text)
+            )
+
+            return (
+                jsonify(
+                    {
+                        "job_description": job_description,
+                        "extracted_info": extracted_info,
+                        "match_percentage": match_percentage,
+                        "matching_skills": matching_skills,
+                    }
+                ),
+                200,
+            )
+
+    except Exception as e:
+        app.logger.error(f"Error analyzing CV: {e}")
+        return jsonify({"error": "Internal Server Error"}), 500
+
+
 def extract_text_from_image(file_path):
     try:
         pix = fitz.Pixmap(file_path)
@@ -103,15 +154,26 @@ def convert_table_to_json(table):
     return table.to_json(orient="split")
 
 
+def clean_text(text):
+    # Remove hyperlinks
+    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+
+    # Remove special characters and punctuations
+    text = re.sub(r'[^A-Za-z0-9\s]', '', text)
+
+    text = text.lower()
+
+    text_tokens = text.split()
+    filtered_text = [word for word in text_tokens if word not in stop_words]
+
+    return ' '.join(filtered_text)
+
+
 def clean_up_table(df):
     df = df.dropna(how="all").dropna(axis=1, how="all")
-    df = df.apply(
-        lambda x: x.str.strip() if x.dtype == "object" else x
-    )
+    df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
     df = df.replace("", pd.NA)
-    df = df.dropna(how="all").dropna(
-        axis=1, how="all"
-    )
+    df = df.dropna(how="all").dropna(axis=1, how="all")
     return df
 
 
@@ -138,24 +200,14 @@ def create_nlp_pipeline():
     ruler = EntityRuler(nlp, overwrite_ents=True)
 
     patterns = [
-        {
-            "label": "EDUCATION",
-            "pattern": [{"LOWER": "b.a."}, {"LOWER": "m.a."}, {"LOWER": "phd"}],
-        },
+        {"label": "EDUCATION", "pattern": [{"LOWER": "education"}]},
         {"label": "SKILLS", "pattern": [{"LOWER": "skills"}]},
-        {
-            "label": "WORK_EXPERIENCE",
-            "pattern": [
-                {"LOWER": {"IN": ["work", "experience", "history"]}},
-                {"LOWER": {"IN": ["work", "experience", "history"]}, "OP": "?"},
-            ],
-        },
+        {"label": "WORK_EXPERIENCE", "pattern": [{"LOWER": "experience"}]},
+        {"label": "WORK_EXPERIENCE", "pattern": [{"LOWER": "history"}]},
     ]
 
     ruler.add_patterns(patterns)
-    nlp.add_pipe(
-        "entity_ruler", name="entity_ruler", last=True
-    )
+    nlp.add_pipe("entity_ruler", name="entity_ruler", last=True)
     return nlp
 
 
@@ -223,11 +275,42 @@ def process_extracted_text(extracted_text):
     return info
 
 
+def find_skills_in_cv(job_description, cv_text):
+    # Normalize job description by replacing newlines with commas if any
+    job_description = job_description.replace("\n", ",")
+
+    # Convert job description to an array of skills
+    required_skills = [
+        skill.strip().lower() for skill in job_description.split(",") if skill.strip()
+    ]
+
+    # Prepare the CV text for searching
+    cv_text_lower = cv_text.lower()
+
+    # Dictionary to store whether each skill is found in the CV
+    skills_found = {}
+
+    # Search for each skill in the CV text
+    for skill in required_skills:
+        skills_found[skill] = skill in cv_text_lower
+
+    return skills_found
+
+
+def analyze_job_description(job_description, resume_text):
+    skills_found = find_skills_in_cv(job_description, resume_text)
+    total_skills = len(skills_found)
+    matched_skills = sum(found for found in skills_found.values())
+    match_percentage = (
+        round((matched_skills / total_skills) * 100, 1) if total_skills > 0 else 0
+    )
+    matching_skills = [skill for skill, found in skills_found.items() if found]
+    return match_percentage, matching_skills
+
+
 if __name__ == "__main__":
     if not os.path.exists("uploads"):
         os.makedirs("uploads")
     # Set the TESSDATA_PREFIX environment variable
-    os.environ["TESSDATA_PREFIX"] = (
-        "/usr/local/Cellar/tesseract/5.4.1/share/tessdata"  # Update this path as needed depending on installed version
-    )
+    os.environ["TESSDATA_PREFIX"] = "/usr/share/tesseract-ocr/4.00/tessdata/"
     app.run(debug=True)
