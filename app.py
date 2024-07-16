@@ -5,16 +5,18 @@ import pandas as pd
 import camelot
 import spacy
 from spacy.pipeline import EntityRuler
+from spacy.matcher import Matcher
 import re
 
 import nltk
-nltk.download('stopwords')
+
+nltk.download("stopwords")
 from nltk.corpus import stopwords
 
 app = Flask(__name__)
 
 nlp = spacy.load("en_core_web_sm")
-stop_words = set(stopwords.words('english'))
+stop_words = set(stopwords.words("english"))
 
 
 @app.route("/")
@@ -95,6 +97,8 @@ def analyze_cv():
                 job_description, clean_text(resume_text)
             )
 
+            cleaned = clean_text(resume_text)
+
             return (
                 jsonify(
                     {
@@ -102,6 +106,7 @@ def analyze_cv():
                         "extracted_info": extracted_info,
                         "match_percentage": match_percentage,
                         "matching_skills": matching_skills,
+                        "cleaned_text": cleaned,
                     }
                 ),
                 200,
@@ -156,17 +161,17 @@ def convert_table_to_json(table):
 
 def clean_text(text):
     # Remove hyperlinks
-    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+    text = re.sub(r"http\S+|www\S+|https\S+", "", text, flags=re.MULTILINE)
 
     # Remove special characters and punctuations
-    text = re.sub(r'[^A-Za-z0-9\s]', '', text)
+    text = re.sub(r"[^A-Za-z0-9\s]", "", text)
 
     text = text.lower()
 
     text_tokens = text.split()
     filtered_text = [word for word in text_tokens if word not in stop_words]
 
-    return ' '.join(filtered_text)
+    return " ".join(filtered_text)
 
 
 def clean_up_table(df):
@@ -177,16 +182,90 @@ def clean_up_table(df):
     return df
 
 
-def extract_name(text):
-    name_pattern = re.compile(r"\b([A-Z][a-z]* [A-Z][a-z]*)\b")
-    names = name_pattern.findall(text)
-    return names[0] if names else None
+# def extract_name(text):
+#     name_pattern = re.compile(r"\b([A-Z][a-z]* [A-Z][a-z]*)\b")
+#     names = name_pattern.findall(text)
+#     return names[0] if names else None
+
+
+def extract_name(resume_text):
+    nlp = spacy.load("en_core_web_md")
+    matcher = Matcher(nlp.vocab)
+
+    # Define name patterns
+    patterns = [
+        [{"POS": "PROPN"}, {"POS": "PROPN"}],  # First name and Last name
+        [
+            {"POS": "PROPN"},
+            {"POS": "PROPN"},
+            {"POS": "PROPN"},
+        ],  # First name, Middle name, and Last name
+        [
+            {"POS": "PROPN"},
+            {"POS": "PROPN"},
+            {"POS": "PROPN"},
+            {"POS": "PROPN"},
+        ],  # First name, Middle name, Middle name, and Last name
+        # Add more patterns as needed
+    ]
+
+    for pattern in patterns:
+        matcher.add("NAME", patterns=[pattern])
+
+    doc = nlp(resume_text)
+    matches = matcher(doc)
+
+    for match_id, start, end in matches:
+        span = doc[start:end]
+        return span.text
+
+    return None
+
+
+def extract_education(text):
+    # Remove new lines from the text
+    text = text.replace("\n", " ")
+
+    education = []
+
+    # Expanded regex pattern to find education information
+    pattern = r"(?i)(?:Bsc|B\.A|B\.S|B\.Eng|B\.Tech|B\.Ed|B\.Com|B\.Pharm|B\.Nurs|B\.Arch|B\.Bus|B\.Admin|B\.Fin|Msc|M\.A|M\.S|M\.Eng|M\.Tech|M\.Ed|M\.Com|M\.Pharm|M\.Nurs|M\.Arch|M\.Bus|M\.Admin|M\.Fin|Ph\.D|Doctorate|Associate|Diploma|Certificate|Bachelor(?:'s)?|Master(?:'s)?|Doctorate(?:'s)?|Ph\.D)\s(?:\w+\s)*\w+"
+
+    matches = re.findall(pattern, text)
+    for match in matches:
+        education.append(match.strip())
+
+    return education
+
+
+# def extract_email(text):
+#     email_pattern = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
+#     emails = email_pattern.findall(text)
+#     return emails[0] if emails else None
 
 
 def extract_email(text):
-    email_pattern = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
-    emails = email_pattern.findall(text)
-    return emails[0] if emails else None
+    email = None
+
+    # Use regex pattern to find a potential email address
+    pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+    match = re.search(pattern, text)
+    if match:
+        email = match.group()
+
+    return email
+
+
+def extract_contact_number(text):
+    contact_number = None
+
+    # Use regex pattern to find a potential contact number
+    pattern = r"\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"
+    match = re.search(pattern, text)
+    if match:
+        contact_number = match.group()
+
+    return contact_number
 
 
 def extract_links(text):
@@ -200,10 +279,18 @@ def create_nlp_pipeline():
     ruler = EntityRuler(nlp, overwrite_ents=True)
 
     patterns = [
-        {"label": "EDUCATION", "pattern": [{"LOWER": "education"}]},
+        {
+            "label": "EDUCATION",
+            "pattern": [{"LOWER": "b.a."}, {"LOWER": "m.a."}, {"LOWER": "phd"}],
+        },
         {"label": "SKILLS", "pattern": [{"LOWER": "skills"}]},
-        {"label": "WORK_EXPERIENCE", "pattern": [{"LOWER": "experience"}]},
-        {"label": "WORK_EXPERIENCE", "pattern": [{"LOWER": "history"}]},
+        {
+            "label": "WORK_EXPERIENCE",
+            "pattern": [
+                {"LOWER": {"IN": ["work", "experience", "history"]}},
+                {"LOWER": {"IN": ["work", "experience", "history"]}, "OP": "?"},
+            ],
+        },
     ]
 
     ruler.add_patterns(patterns)
@@ -218,6 +305,7 @@ def extract_info(text):
     info = {
         "name": "",
         "email": "",
+        "contact_number": "",
         "education": [],
         "work_experience": [],
         "links": [],
@@ -228,6 +316,8 @@ def extract_info(text):
     info["name"] = extract_name(text)
     info["email"] = extract_email(text)
     info["links"] = extract_links(text)
+    info["education"] = extract_education(text)
+    info["contact_number"] = extract_contact_number(text)
 
     for ent in doc.ents:
         if ent.label_ == "EDUCATION":
@@ -250,7 +340,6 @@ def process_extracted_text(extracted_text):
     }
 
     sections_pattern = {
-        "education": r"EDUCATION\n(.*?)(?:\nSKILLS|\n$)",
         "work_experience": r"(?i)(WORK|EXPERIENCE|HISTORY)\n(.*?)(?:\nEDUCATION|\n$)",
         "skills": r"SKILLS\n(.*)",
     }
@@ -264,9 +353,6 @@ def process_extracted_text(extracted_text):
 
     # Process name and email separately
     info = extract_info(extracted_text)
-    info["education"] = (
-        sections["education"].split("\n") if sections["education"] else []
-    )
     info["work_experience"] = (
         sections["work_experience"].split("\n") if sections["work_experience"] else []
     )

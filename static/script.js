@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const analyzeForm = document.getElementById("analyzeForm");
 
     extractForm.addEventListener("submit", function (event) {
+        document.getElementById("extractedData").innerHTML = "<p>Loading...</p>";
         event.preventDefault();
         const formData = new FormData(extractForm);
         fetch("/upload", {
@@ -48,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     content += tablesContainer.outerHTML;
 
                     // Display extracted information
-                    content += `<h3>Extracted Information</h3><pre>${JSON.stringify(data.extracted_info, null, 2)}</pre>`;
+                    // content += `<h3>Extracted Information</h3><pre>${JSON.stringify(data.extracted_info, null, 2)}</pre>`;
 
                     // Update the DOM
                     document.getElementById("extractedData").innerHTML = content;
@@ -60,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     analyzeForm.addEventListener("submit", function (event) {
+        document.getElementById("analysisResult").innerHTML = "<p>Loading...</p>";
         event.preventDefault();
         const formData = new FormData(analyzeForm);
         fetch("/analyze", {
@@ -73,15 +75,16 @@ document.addEventListener("DOMContentLoaded", function () {
                         "analysisResult"
                     ).innerHTML = `<p>Error: ${data.error}</p>`;
                 } else {
+                    console.log(data);
                     document.getElementById("analysisResult").innerHTML = `
                     <h3>Job Description</h3>
                     <pre>${data.job_description}</pre>
-                    <h3>Extracted Information</h3>
-                    <pre>${JSON.stringify(data.extracted_info, null, 2)}</pre>
                     <h3>Match Percentage</h3>
                     <p>${data.match_percentage}%</p>
                     <h3>Matching Skills</h3>
                     <pre>${JSON.stringify(data.matching_skills, null, 2)}</pre>
+                    <h3>Extracted Information</h3>
+                    <pre>${JSON.stringify(data.extracted_info, null, 2)}</pre>
                 `;
                 }
             })
